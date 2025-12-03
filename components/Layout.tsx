@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -34,20 +35,20 @@ const Layout: React.FC<LayoutProps> = ({ currentTool, onToolChange, children }) 
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-[100dvh] bg-gray-50 overflow-hidden">
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white transform transition-transform duration-200 ease-in-out
+        fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform transition-transform duration-200 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        flex flex-col
+        flex flex-col h-full
       `}>
         <div className="flex items-center gap-3 p-6 border-b border-slate-800 flex-shrink-0">
           <div className="p-2 bg-indigo-600 rounded-lg">
@@ -119,9 +120,9 @@ const Layout: React.FC<LayoutProps> = ({ currentTool, onToolChange, children }) 
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Top Header (Mobile) */}
-        <header className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+      <div className="flex-1 flex flex-col h-full w-full relative">
+        {/* Top Header (Mobile - Sticky) */}
+        <header className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 z-30 sticky top-0 shadow-sm flex-shrink-0">
           <div className="flex items-center gap-2">
              <div className="p-1 bg-indigo-600 rounded">
                 <Briefcase size={16} className="text-white" />
@@ -134,7 +135,7 @@ const Layout: React.FC<LayoutProps> = ({ currentTool, onToolChange, children }) 
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8 w-full">
           <div className="max-w-6xl mx-auto h-full">
             {children}
           </div>
