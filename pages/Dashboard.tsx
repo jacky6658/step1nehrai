@@ -9,25 +9,25 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const features = [
     {
+      id: RecruitmentTool.JD_GENERATOR,
+      title: "1. 智能 JD 生成",
+      desc: "輸入關鍵字，AI 瞬間生成專業職缺描述。",
+      icon: FileCheck,
+      color: "bg-blue-100 text-blue-600",
+    },
+    {
       id: RecruitmentTool.PERSONA_GENERATOR,
-      title: "1. 人才畫像生成",
+      title: "2. 人才畫像生成",
       desc: "上傳 JD，AI 協助您具象化人才特質與動機。",
       icon: UserCircle2,
       color: "bg-orange-100 text-orange-600",
     },
     {
       id: RecruitmentTool.TALENT_SEARCH,
-      title: "2. 人才搜尋與策略",
+      title: "3. 人才搜尋與策略",
       desc: "AI 搜尋市場情報，列出挖角目標公司名單。",
       icon: Globe2,
       color: "bg-sky-100 text-sky-600",
-    },
-    {
-      id: RecruitmentTool.JD_GENERATOR,
-      title: "3. 智能 JD 生成",
-      desc: "輸入關鍵字，AI 瞬間生成專業職缺描述。",
-      icon: FileCheck,
-      color: "bg-blue-100 text-blue-600",
     },
     {
       id: RecruitmentTool.INTERVIEW_COPILOT,

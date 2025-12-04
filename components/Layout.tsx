@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -26,9 +25,9 @@ const Layout: React.FC<LayoutProps> = ({ currentTool, onToolChange, children }) 
 
   const navItems = [
     { id: RecruitmentTool.DASHBOARD, label: '儀表板 (Dashboard)', icon: LayoutDashboard },
+    { id: RecruitmentTool.JD_GENERATOR, label: 'JD 職缺生成器', icon: FileText },
     { id: RecruitmentTool.PERSONA_GENERATOR, label: '人才畫像生成器', icon: UserCircle2 },
     { id: RecruitmentTool.TALENT_SEARCH, label: '人才搜尋與策略', icon: Globe2 },
-    { id: RecruitmentTool.JD_GENERATOR, label: 'JD 職缺生成器', icon: FileText },
     { id: RecruitmentTool.OUTREACH_WRITER, label: '開發信撰寫助手', icon: Send },
     { id: RecruitmentTool.INTERVIEW_COPILOT, label: '面試提問助手', icon: Users },
     { id: RecruitmentTool.AGENT_CHAT, label: '招募 AI 顧問', icon: Bot },
