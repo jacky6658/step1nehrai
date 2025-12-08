@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { generateOutreachMessage } from '../services/geminiService';
 import { exportElementToPDF, exportToExcel } from '../services/exportService';
@@ -8,7 +9,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 
 // Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs`;
 
 interface OutreachWriterProps {
     initialData?: SharedData;
@@ -68,9 +69,9 @@ const OutreachWriter: React.FC<OutreachWriterProps> = ({ initialData }) => {
         const arrayBuffer = await file.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({
             data: new Uint8Array(arrayBuffer),
-            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/cmaps/',
+            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/cmaps/',
             cMapPacked: true,
-            standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/standard_fonts/'
+            standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/standard_fonts/'
         });
         const pdf = await loadingTask.promise;
         
