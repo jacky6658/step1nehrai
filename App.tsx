@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -130,6 +129,27 @@ const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [sharedData, setSharedData] = useState<SharedData | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check for LinkedIn Token Return
+  useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('linkedin_token');
+      const error = params.get('error');
+
+      if (token) {
+          localStorage.setItem('linkedin_access_token', token);
+          localStorage.setItem('linkedin_connected', 'true');
+          // Clear query params from URL without refresh
+          window.history.replaceState({}, document.title, window.location.pathname);
+          // Optional: Notify user? Or just let them see status in settings
+          console.log("LinkedIn connected successfully");
+      }
+      
+      if (error) {
+          alert(`LinkedIn 連線失敗: ${error}`);
+          window.history.replaceState({}, document.title, window.location.pathname);
+      }
+  }, []);
 
   // Check for API key on mount
   useEffect(() => {

@@ -172,9 +172,13 @@ export const generateOutreachMessage = async (
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        responseMimeType: 'application/json'
+      }
     });
     
     const text = response.text || "";
+    // Since we use responseMimeType, we usually get raw JSON, but handle potential markdown blocks just in case
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/) || [null, text];
     let jsonString = jsonMatch[1] || text;
     
@@ -223,9 +227,9 @@ export const generateInterviewQuestions = async (
 
       JSON Schema:
       {
-        "resumeDeepDive": ["Question 1", "Question 2", "Question 3"], // 3-4 probing questions verifying specific experiences in resume
-        "gapAnalysis": ["Question 1", "Question 2", "Question 3"], // 3-4 questions addressing skills required in JD but missing/weak in resume
-        "behavioralQuestions": ["Question 1", "Question 2", "Question 3"] // 2-3 questions based on soft skills/culture
+        "resumeDeepDive": ["Question 1", "Question 2", "Question 3"],
+        "gapAnalysis": ["Question 1", "Question 2", "Question 3"],
+        "behavioralQuestions": ["Question 1", "Question 2", "Question 3"]
       }
     `;
   } else {
@@ -240,9 +244,9 @@ export const generateInterviewQuestions = async (
 
       JSON Schema:
       {
-        "resumeDeepDive": ["Question 1", "Question 2", "Question 3"], // Since no resume, create 3 generic technical/experience deep dive questions based on JD requirements
-        "gapAnalysis": ["Question 1", "Question 2", "Question 3"], // Focus on "Tell me about a time you had to learn [Skill]..." types
-        "behavioralQuestions": ["Question 1", "Question 2", "Question 3"] // 3 culture fit questions
+        "resumeDeepDive": ["Question 1", "Question 2", "Question 3"],
+        "gapAnalysis": ["Question 1", "Question 2", "Question 3"],
+        "behavioralQuestions": ["Question 1", "Question 2", "Question 3"]
       }
     `;
   }
@@ -251,6 +255,9 @@ export const generateInterviewQuestions = async (
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        responseMimeType: 'application/json'
+      }
     });
     
     const text = response.text || "";
@@ -293,13 +300,13 @@ export const analyzeCandidateMatch = async (
 
     JSON Schema:
     {
-      "score": number, // 0-100
-      "summary": "string", // A one-sentence summary of the fit
-      "recommendation": "Strong Hire" | "Hire" | "Hold" | "Reject",
-      "reasoning": "string", // Why this recommendation?
-      "strengths": ["string", "string", ...], // Top 3-5 strengths
-      "weaknesses": ["string", "string", ...], // Top 3-5 weaknesses/risks
-      "interviewQuestions": ["string", "string", ...] // 3-5 Specific questions to ask based on this analysis
+      "score": 85,
+      "summary": "string",
+      "recommendation": "Strong Hire", 
+      "reasoning": "string",
+      "strengths": ["string", "string"],
+      "weaknesses": ["string", "string"],
+      "interviewQuestions": ["string", "string"]
     }
   `;
 
@@ -307,6 +314,9 @@ export const analyzeCandidateMatch = async (
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        responseMimeType: 'application/json'
+      }
     });
     
     const text = response.text || "";
@@ -425,6 +435,11 @@ export const generateTalentSearchStrategy = async (
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
     let jsonString = jsonMatch ? jsonMatch[1] : text;
     
+    // Cleanup potential comments or bad formatting in JSON string from AI
+    jsonString = jsonString
+      .replace(/\/\/.*$/gm, "") // Remove single line comments
+      .replace(/\/\*[\s\S]*?\*\//g, ""); // Remove multi line comments
+
     const firstBrace = jsonString.indexOf('{');
     const lastBrace = jsonString.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1) {
@@ -511,6 +526,9 @@ export const generateCandidatePersona = async (
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        responseMimeType: 'application/json'
+      }
     });
 
     const text = response.text || "";
@@ -536,12 +554,20 @@ export const createAgentChat = (language: Language): Chat => {
   const langName = getLangName(language);
   
   const AGENT_SYSTEM_INSTRUCTION = `
-    You are RecruitAI, a top-tier Recruitment Consultant and HR Strategy Expert.
-    Your goal is to assist Headhunters and HR professionals.
-    You are expert in recruitment trends, salary negotiation, Boolean Search Strings, and interview techniques.
+    You are RecruitAI, a veteran Senior Headhunter & Recruitment Consultant (Agency side) with 15+ years of experience.
+    You are NOT a general HR admin; you are a strategic partner focused on Executive Search, Talent Acquisition, and Closing deals.
+
+    Your expertise includes:
+    1. **Advanced Sourcing**: X-Ray Search, Boolean Logic, LinkedIn Recruiter strategies.
+    2. **Candidate Management**: Handling counter-offers, digging for pain points, and salary negotiation.
+    3. **Client Strategy**: Market mapping, intake meetings, and advising on realistic hiring expectations.
+    
+    TONE & STYLE:
+    - **No Fluff**: Do not give generic, textbook answers. Give specific, actionable, "street-smart" advice used by top billers.
+    - **Direct & Sharp**: Get straight to the point. Use bullet points for clarity.
+    - **Example-Driven**: If asked about sourcing, provide specific Boolean Strings. If asked about talking to candidates, provide specific scripts/questions.
     
     CRITICAL INSTRUCTION: You MUST answer the user in ${langName} language.
-    Keep answers professional, concise, and actionable.
   `;
 
   return ai.chats.create({

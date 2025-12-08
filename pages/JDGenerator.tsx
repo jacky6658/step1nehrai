@@ -1,7 +1,8 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { generateJobDescription } from '../services/geminiService';
 import { exportElementToPDF, exportToExcel } from '../services/exportService';
-import { Loader2, Copy, Check, RefreshCw, Sparkles, FileCheck, Globe, Download, UploadCloud, FileText, Share2, LayoutTemplate, Type, Trash2, Briefcase, Code, PenTool, Eraser, ArrowLeft, Building2 } from 'lucide-react';
+import { Loader2, Copy, Check, RefreshCw, Sparkles, FileCheck, Globe, Download, UploadCloud, FileText, Share2, LayoutTemplate, Type, Trash2, Briefcase, Code, PenTool, Eraser, ArrowLeft, Building2, Linkedin, ExternalLink } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Language, LANGUAGE_OPTIONS, SharedData } from '../types';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -39,9 +40,21 @@ const JDGenerator: React.FC<JDGeneratorProps> = ({ initialData }) => {
   const [resultPlatform, setResultPlatform] = useState('');
   const [resultSocial, setResultSocial] = useState('');
   const [activeTab, setActiveTab] = useState<'platform' | 'social'>('platform');
+  const [isEditing, setIsEditing] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  
+  // Social Integration State
+  const [isLinkedInConnected, setIsLinkedInConnected] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  // Check LinkedIn connection
+  useEffect(() => {
+      // Check for token instead of simple boolean
+      const token = localStorage.getItem('linkedin_access_token');
+      setIsLinkedInConnected(!!token);
+  }, []);
 
   // Pre-fill data
   useEffect(() => {
@@ -205,6 +218,14 @@ const JDGenerator: React.FC<JDGeneratorProps> = ({ initialData }) => {
 
   const currentResult = activeTab === 'platform' ? resultPlatform : resultSocial;
 
+  const handleContentUpdate = (newContent: string) => {
+      if (activeTab === 'platform') {
+          setResultPlatform(newContent);
+      } else {
+          setResultSocial(newContent);
+      }
+  };
+
   const copyToClipboard = () => {
     if (!currentResult) return;
     navigator.clipboard.writeText(currentResult);
@@ -225,6 +246,50 @@ const JDGenerator: React.FC<JDGeneratorProps> = ({ initialData }) => {
         { Section: 'JD Content', Content: currentResult }
     ];
     exportToExcel(`${formData.title}_JD_${activeTab}`, data);
+  };
+
+  const handlePublishToLinkedIn = async () => {
+      if (!isLinkedInConnected) {
+          alert("請先至 [設定] 頁面綁定 LinkedIn 帳號");
+          return;
+      }
+      
+      if (!currentResult) return;
+      
+      setIsPublishing(true);
+      try {
+          const accessToken = localStorage.getItem('linkedin_access_token');
+          
+          const response = await fetch('/api/linkedin/share', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  text: currentResult,
+                  accessToken: accessToken
+              })
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Publishing failed');
+          }
+
+          const result = await response.json();
+          alert("發布成功！JD 已同步至您的 LinkedIn 動態。");
+          
+          // Optionally link to the post if ID is returned
+          if(result.postId) {
+             console.log("Published Post ID:", result.postId);
+          }
+
+      } catch (error: any) {
+          console.error("LinkedIn Publish Error:", error);
+          alert(`發布失敗: ${error.message}`);
+      } finally {
+          setIsPublishing(false);
+      }
   };
 
   const handleBackToEdit = () => {
@@ -432,16 +497,37 @@ const JDGenerator: React.FC<JDGeneratorProps> = ({ initialData }) => {
       {/* STEP 2: RESULT */}
       {step === 'result' && (
       <div className="animate-enter pb-10">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
             <button 
                 onClick={handleBackToEdit}
-                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-colors bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm hover:shadow-md"
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-colors bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm hover:shadow-md self-start md:self-auto"
             >
                 <ArrowLeft size={18} /> 返回編輯
             </button>
             
             {currentResult && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 self-end md:self-auto">
+                    {/* LinkedIn Publish Button */}
+                    {isLinkedInConnected ? (
+                        <button 
+                            onClick={handlePublishToLinkedIn}
+                            disabled={isPublishing}
+                            className="flex items-center gap-2 bg-[#0077b5] hover:bg-[#006097] text-white px-4 py-2 rounded-lg transition-colors font-bold shadow-sm disabled:opacity-70"
+                            title="一鍵發布至 LinkedIn"
+                        >
+                            {isPublishing ? <Loader2 size={18} className="animate-spin" /> : <Linkedin size={18} />}
+                            {isPublishing ? '發布中...' : '發布'}
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={() => alert("請先至 [設定] 頁面綁定 LinkedIn 帳號")}
+                            className="flex items-center gap-2 bg-gray-100 text-gray-400 px-4 py-2 rounded-lg font-bold shadow-sm cursor-not-allowed"
+                            title="請先至設定頁面綁定"
+                        >
+                            <Linkedin size={18} /> 發布
+                        </button>
+                    )}
+
                     <button 
                         onClick={handleExportExcel}
                         className="flex items-center gap-2 bg-white border border-green-200 text-green-700 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors font-bold shadow-sm"
@@ -477,10 +563,10 @@ const JDGenerator: React.FC<JDGeneratorProps> = ({ initialData }) => {
             </div>
 
             {/* Output Header with Tabs */}
-            <div className="border-b border-gray-200 bg-slate-50/50">
-                <div className="flex">
+            <div className="border-b border-gray-200 bg-slate-50/50 flex justify-between items-center pr-4">
+                <div className="flex flex-1">
                     <button 
-                        onClick={() => setActiveTab('platform')}
+                        onClick={() => { setActiveTab('platform'); setIsEditing(false); }}
                         className={`flex-1 py-4 text-base font-bold flex items-center justify-center gap-2 transition-colors relative
                             ${activeTab === 'platform' ? 'text-blue-700 bg-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}
                         `}
@@ -489,7 +575,7 @@ const JDGenerator: React.FC<JDGeneratorProps> = ({ initialData }) => {
                         {activeTab === 'platform' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>}
                     </button>
                     <button 
-                        onClick={() => setActiveTab('social')}
+                        onClick={() => { setActiveTab('social'); setIsEditing(false); }}
                         className={`flex-1 py-4 text-base font-bold flex items-center justify-center gap-2 transition-colors relative
                             ${activeTab === 'social' ? 'text-pink-600 bg-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}
                         `}
@@ -498,6 +584,21 @@ const JDGenerator: React.FC<JDGeneratorProps> = ({ initialData }) => {
                         {activeTab === 'social' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-pink-500"></div>}
                     </button>
                 </div>
+                
+                {/* Editing Toggle */}
+                {currentResult && (
+                    <button
+                        onClick={() => setIsEditing(!isEditing)}
+                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors
+                            ${isEditing 
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                                : 'bg-white text-slate-600 border-gray-200 hover:bg-gray-50'
+                            }`}
+                    >
+                        {isEditing ? <Check size={16}/> : <PenTool size={16}/>}
+                        {isEditing ? '完成編輯' : '編輯內容'}
+                    </button>
+                )}
             </div>
             
             <div className="flex items-center justify-end p-3 bg-white border-b border-gray-100">
@@ -512,9 +613,19 @@ const JDGenerator: React.FC<JDGeneratorProps> = ({ initialData }) => {
 
             <div className="flex-1 overflow-y-auto bg-white p-8">
                 {currentResult ? (
-                    <div className="prose prose-indigo prose-lg max-w-none">
-                        <ReactMarkdown>{currentResult}</ReactMarkdown>
-                    </div>
+                    <>
+                        {isEditing ? (
+                            <textarea
+                                value={currentResult}
+                                onChange={(e) => handleContentUpdate(e.target.value)}
+                                className="w-full h-[500px] p-4 font-mono text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            />
+                        ) : (
+                            <div className="prose prose-indigo prose-lg max-w-none">
+                                <ReactMarkdown>{currentResult}</ReactMarkdown>
+                            </div>
+                        )}
+                    </>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-60">
                         <p>生成錯誤，請重試。</p>
