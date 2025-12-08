@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import { Language, LANGUAGE_OPTIONS, SharedData, CandidateAnalysisStructured, InterviewQuestionsStructured } from '../types';
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
+import * as XLSX from "xlsx";
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs`;
@@ -113,7 +114,9 @@ const InterviewCopilot: React.FC<InterviewCopilotProps> = ({ initialData }) => {
             // Improved text extraction for CJK
             let lastItemStr = '';
             const pageText = textContent.items.map((item: any) => {
-                const str = item.str;
+                const str = item.str || '';
+                if (!str) return '';
+
                 let prefix = '';
                 if (lastItemStr && str) {
                    if (!isCJK(lastItemStr.slice(-1)) && !isCJK(str[0]) && str !== ' ' && lastItemStr !== ' ') {
@@ -131,10 +134,16 @@ const InterviewCopilot: React.FC<InterviewCopilotProps> = ({ initialData }) => {
         const arrayBuffer = await file.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
         text = result.value;
+    } else if (fileNameLower.endsWith('.xlsx') || fileNameLower.endsWith('.xls')) {
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        text = XLSX.utils.sheet_to_txt(worksheet);
     } else if (file.type.startsWith('text/') || fileNameLower.endsWith('.txt')) {
         text = await file.text();
     } else {
-        throw new Error('不支援的檔案格式。請上傳 PDF, Word (.docx) 或純文字檔。');
+        throw new Error('不支援的檔案格式。請上傳 PDF, Word (.docx), Excel 或純文字檔。');
     }
 
     return text;
@@ -145,7 +154,7 @@ const InterviewCopilot: React.FC<InterviewCopilotProps> = ({ initialData }) => {
     setIsParsingJd(true);
     try {
         const text = await parseDocument(file);
-        if (!text.trim()) throw new Error("無法提取文字，請確認檔案內容。");
+        if (!text.trim()) throw new Error("無法提取文字，請確認檔案內容不為空，且不是「純圖片」掃描檔 (Scanned Document)。若問題持續，請嘗試直接貼上文字。");
         setJdText(text);
     } catch (error: any) {
         console.error('JD Parsing Error:', error);
@@ -160,7 +169,7 @@ const InterviewCopilot: React.FC<InterviewCopilotProps> = ({ initialData }) => {
     setIsParsingResume(true);
     try {
         const text = await parseDocument(file);
-        if (!text.trim()) throw new Error("無法提取文字，請確認檔案內容。");
+        if (!text.trim()) throw new Error("無法提取文字，請確認檔案內容不為空，且不是「純圖片」掃描檔 (Scanned Document)。若問題持續，請嘗試直接貼上文字。");
         setResumeText(text);
     } catch (error: any) {
         console.error('Resume Parsing Error:', error);
@@ -299,13 +308,13 @@ const InterviewCopilot: React.FC<InterviewCopilotProps> = ({ initialData }) => {
                                     <span className={`block font-bold text-sm mb-1 ${isDraggingJd || jdText ? 'text-blue-700' : 'text-gray-600'}`}>
                                         {isDraggingJd ? '放開上傳' : jdText ? '已匯入 JD (點擊更換)' : '拖曳或點擊上傳'}
                                     </span>
-                                    <span className="text-xs text-gray-400">PDF, Word, Text</span>
+                                    <span className="text-xs text-gray-400">PDF, Word, Excel, Text</span>
                                 </div>
                             )}
                             <input 
                                 type="file" 
                                 className="hidden" 
-                                accept=".pdf,.docx,.txt"
+                                accept=".pdf,.docx,.txt,.xlsx,.xls"
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if(file) handleJdFileProcess(file);
@@ -352,13 +361,13 @@ const InterviewCopilot: React.FC<InterviewCopilotProps> = ({ initialData }) => {
                                     <span className={`block font-bold text-sm mb-1 ${isDraggingResume || resumeText ? 'text-green-700' : 'text-gray-600'}`}>
                                         {isDraggingResume ? '放開上傳' : resumeText ? '已解析履歷 (點擊更換)' : '拖曳或點擊上傳'}
                                     </span>
-                                    <span className="text-xs text-gray-400">PDF, Word, Text</span>
+                                    <span className="text-xs text-gray-400">PDF, Word, Excel, Text</span>
                                 </div>
                             )}
                             <input 
                                 type="file" 
                                 className="hidden" 
-                                accept=".pdf,.docx,.txt"
+                                accept=".pdf,.docx,.txt,.xlsx,.xls"
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if(file) handleResumeFileProcess(file);

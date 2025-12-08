@@ -71,7 +71,9 @@ const AgentChat: React.FC = () => {
             const textContent = await page.getTextContent();
             let lastItemStr = '';
             const pageText = textContent.items.map((item: any) => {
-                const str = item.str;
+                const str = item.str || '';
+                if (!str) return '';
+
                 let prefix = '';
                 if (lastItemStr && str) {
                    if (!isCJK(lastItemStr.slice(-1)) && !isCJK(str[0]) && str !== ' ' && lastItemStr !== ' ') {
@@ -133,6 +135,8 @@ const AgentChat: React.FC = () => {
       setIsParsing(true);
       try {
           const content = await parseFile(file);
+          if (!content.trim()) throw new Error("無法提取文字，請確認檔案內容不為空，且不是「純圖片」掃描檔 (Scanned Document)。若問題持續，請嘗試直接貼上文字。");
+
           let type: Attachment['type'] = 'text';
           if (file.name.endsWith('.pdf')) type = 'pdf';
           else if (file.name.endsWith('.docx')) type = 'word';
@@ -144,9 +148,9 @@ const AgentChat: React.FC = () => {
               type,
               content
           });
-      } catch (error) {
+      } catch (error: any) {
           console.error("File parsing error", error);
-          alert("檔案解析失敗，請確認格式是否正確。");
+          alert(error.message || "檔案解析失敗，請確認格式是否正確。");
       } finally {
           setIsParsing(false);
           // Reset input value to allow selecting the same file again if needed

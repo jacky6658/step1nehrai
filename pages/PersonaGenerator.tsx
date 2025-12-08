@@ -48,7 +48,9 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({ onNavigateWithData 
                 const textContent = await page.getTextContent();
                 let lastItemStr = '';
                 const pageText = textContent.items.map((item: any) => {
-                    const str = item.str;
+                    const str = item.str || ''; // Safe fallback
+                    if (!str) return '';
+
                     let prefix = '';
                     if (lastItemStr && str) {
                        if (!isCJK(lastItemStr.slice(-1)) && !isCJK(str[0]) && str !== ' ' && lastItemStr !== ' ') {
@@ -99,7 +101,7 @@ const PersonaGenerator: React.FC<PersonaGeneratorProps> = ({ onNavigateWithData 
     try {
         const text = await parseDocument(file);
         if (!text.trim()) {
-             throw new Error("無法從檔案中提取文字。請確認檔案不為空，且不是「純圖片」掃描檔 (Scanned Document)。");
+             throw new Error("無法從檔案中提取文字。請確認檔案不為空，且不是「純圖片」掃描檔 (Scanned Document)。若問題持續，請嘗試直接貼上文字。");
         }
         setJdText(text);
     } catch (error: any) {
