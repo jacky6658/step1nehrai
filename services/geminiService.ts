@@ -1,5 +1,5 @@
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI, Chat } from "@google/genai";
 import { Language, TalentStrategyStructured, OutreachOption, CandidatePersona, CandidateAnalysisStructured, InterviewQuestionsStructured } from "../types";
 
 // Helper to get language name for prompts
