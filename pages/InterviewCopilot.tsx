@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { generateInterviewQuestions, analyzeCandidateMatch } from '../services/geminiService';
 import { exportElementToPDF, exportToExcel } from '../services/exportService';
@@ -221,7 +222,7 @@ const InterviewCopilot: React.FC<InterviewCopilotProps> = ({ initialData }) => {
   };
 
   const handleExportExcel = () => {
-    let data = [];
+    let data: Record<string, any>[] = [];
     if (activeTab === 'questions' && questionsResult) {
         data = [
             { Section: 'Resume Deep Dive', Content: questionsResult.resumeDeepDive.join('\n') },
